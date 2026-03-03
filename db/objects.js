@@ -41,9 +41,22 @@ const searchObjectsStatement = db.prepare(`
   LIMIT @limit
 `);
 
+const getObjectByValueStatement = db.prepare(`
+  SELECT category, name, value, quantity, threshold
+  FROM objects
+  WHERE value = @value
+`);
+
 const addObjectQuantityStatement = db.prepare(`
   UPDATE objects
   SET quantity = quantity + @quantity
+  WHERE value = @value
+  RETURNING category, name, value, quantity, threshold
+`);
+
+const removeObjectQuantityStatement = db.prepare(`
+  UPDATE objects
+  SET quantity = MAX(quantity - @quantity, 0)
   WHERE value = @value
   RETURNING category, name, value, quantity, threshold
 `);
@@ -79,8 +92,42 @@ function addObjectQuantity(value, quantity) {
   );
 }
 
+function removeObjectQuantity(value, quantity) {
+  const existingObject = getObjectByValueStatement.get({ value });
+  if (!existingObject) {
+    return null;
+  }
+
+  if (existingObject.quantity === 0) {
+    return {
+      ...existingObject,
+      removedQuantity: 0,
+    };
+  }
+
+  if (quantity > existingObject.quantity) {
+    return {
+      ...existingObject,
+      removedQuantity: 0,
+      requestedQuantity: quantity,
+      hasInsufficientQuantity: true,
+    };
+  }
+
+  const updatedObject = removeObjectQuantityStatement.get({
+    value,
+    quantity,
+  });
+
+  return {
+    ...updatedObject,
+    removedQuantity: Math.min(quantity, existingObject.quantity),
+  };
+}
+
 module.exports = {
   initializeObjectsTable,
   searchObjects,
   addObjectQuantity,
+  removeObjectQuantity,
 };
