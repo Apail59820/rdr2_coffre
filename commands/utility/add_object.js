@@ -5,19 +5,20 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("ajouter")
     .setDescription("Ajoute un objet au coffre.")
-    .addStringOption(option =>
-      option
-        .setName("objet")
-        .setDescription("L'objet à ajouter.")
-        .setRequired(true)
-        .setAutocomplete(true) // <= important
+    .addStringOption(
+      (option) =>
+        option
+          .setName("objet")
+          .setDescription("L'objet à ajouter.")
+          .setRequired(true)
+          .setAutocomplete(true), // <= important
     )
-    .addIntegerOption(option =>
+    .addIntegerOption((option) =>
       option
         .setName("quantite")
         .setDescription("Quantité à ajouter")
         .setRequired(true)
-        .setMinValue(1)
+        .setMinValue(1),
     ),
 
   async autocomplete(interaction) {
