@@ -7,8 +7,11 @@ const {
   GatewayIntentBits,
   MessageFlags,
 } = require("discord.js");
+const { initializeObjectsTable } = require("./db/objects");
 
 require("dotenv").config();
+
+initializeObjectsTable();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 

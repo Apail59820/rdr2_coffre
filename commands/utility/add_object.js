@@ -1,31 +1,5 @@
 const { SlashCommandBuilder } = require("discord.js");
-
-const items = [  { name: "Plantes", value: "plants" },
-  { name: "Eau purifié", value: "purified_water" },
-  { name: "Tabac indien", value: "indian_tobacco" },
-  { name: "Miel", value: "honey" },
-  { name: "Petite carcasse", value: "small_carcass" },
-  { name: "Grosse carcasse", value: "large_carcass" },
-  { name: "Plume", value: "feather" },
-  { name: "Viande", value: "meat" },
-  { name: "Cuir traité", value: "treated_leather" },
-  { name: "Huile de poisson", value: "fish_oil" },
-  { name: "Bois", value: "wood" },
-  { name: "Pierre", value: "stone" },
-  { name: "Métal", value: "metal" },
-  { name: "Minerai", value: "ore" },
-  { name: "Coton tissé", value: "woven_cotton" },
-  { name: "Kit ancestral", value: "ancestral_kit" },
-  { name: "(nourriture) Sagamite", value: "sagamite" },
-  { name: "(boisson) Thé Natif", value: "native_tea" },
-  { name: "Menthe", value: "mint" },
-  { name: "Cassis", value: "blackcurrant" },
-  { name: "Thym", value: "thyme" },
-  { name: "Fraise", value: "strawberry" },
-  { name: "Riz", value: "rice" },
-  { name: "Pavot", value: "poppy" },
-  { name: "Gingembre", value: "ginger" }
-]
+const { addObjectQuantity, searchObjects } = require("../../db/objects");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -50,13 +24,10 @@ module.exports = {
     const focused = interaction.options.getFocused(true);
     const query = focused.value.toLowerCase();
 
-    const filtered = items
-      .filter(i =>
-        i.name.toLowerCase().includes(query) ||
-        i.value.toLowerCase().includes(query)
-      )
-      .slice(0, 25)
-      .map(i => ({ name: i.name, value: i.value }));
+    const filtered = searchObjects(query).map((object) => ({
+      name: object.name,
+      value: object.value,
+    }));
 
     await interaction.respond(filtered);
   },
@@ -64,7 +35,15 @@ module.exports = {
   async execute(interaction) {
     const objet = interaction.options.getString("objet", true);
     const quantite = interaction.options.getInteger("quantite", true);
+    const updatedObject = addObjectQuantity(objet, quantite);
 
-    await interaction.reply(`✅ Ajouté **${quantite}** × **${objet}** au coffre.`);
+    if (!updatedObject) {
+      await interaction.reply(`❌ Objet inconnu : **${objet}**.`);
+      return;
+    }
+
+    await interaction.reply(
+      `✅ Ajouté **${quantite}** × **${updatedObject.name}** au coffre. Total: **${updatedObject.quantity}**.`,
+    );
   },
 };
